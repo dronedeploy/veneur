@@ -20,9 +20,9 @@ type SrvDiscover struct {
 // note, it should load in an optional nameserver
 func NewSrv() (*SrvDiscoverer, error) {
 	return &SrvDiscoverer {
-		Nameserver: nil
-		Port: "8126" //TODO: make this configurable
-		Protocol: "tcp" //TODO: make this configurable
+		Nameserver: nil,
+		Port: "8126", //TODO: make this configurable
+		Protocol: "tcp", //TODO: make this configurable
 	}, nil
 }
 
