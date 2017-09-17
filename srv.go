@@ -12,7 +12,7 @@ import (
 
 type SrvDiscoverer struct {
 	Nameserver string
-	Port string
+	Port int
 	Protocol string
 }
 
@@ -21,7 +21,7 @@ type SrvDiscoverer struct {
 func NewSrv() (*SrvDiscoverer, error) {
 	return &SrvDiscoverer {
 		Nameserver: "",
-		Port: "8126", //TODO: make this configurable
+		Port: 8126, //TODO: make this configurable
 		Protocol: "tcp", //TODO: make this configurable
 	}, nil
 }
