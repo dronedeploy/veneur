@@ -291,6 +291,7 @@ func (p *Proxy) RefreshDestinations(serviceName string, ring *consistent.Consist
 
 	start := time.Now()
 	destinations, err := p.Discoverer.GetDestinationsForService(serviceName)
+	log.WithField("forwarding destinations", destinations).Debug("Updating forwarding destinations")
 	p.Statsd.TimeInMilliseconds("discoverer.update_duration_ns", float64(time.Since(start).Nanoseconds()), []string{fmt.Sprintf("service:%s", serviceName)}, 1.0)
 	if err != nil || len(destinations) == 0 {
 		log.WithError(err).WithField("service", serviceName).Error("Discoverer returned an error, destinations may be stale!")
