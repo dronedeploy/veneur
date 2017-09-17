@@ -10,7 +10,7 @@ import (
 // Srv is a Discoverer that uses SRV records to find
 // healthy instances.
 
-type SrvDiscover struct {
+type SrvDiscoverer struct {
 	Nameserver string
 	Port string
 	Protocol string
