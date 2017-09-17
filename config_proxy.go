@@ -4,6 +4,8 @@ type ProxyConfig struct {
 	ConsulForwardServiceName string `yaml:"consul_forward_service_name"`
 	ConsulRefreshInterval    string `yaml:"consul_refresh_interval"`
 	ConsulTraceServiceName   string `yaml:"consul_trace_service_name"`
+	SrvForwardServiceName    string `yaml:"srv_forward_service_name"`
+	SrvRefreshInterval       string `yaml:"srv_refresh_interval"`
 	Debug                    bool   `yaml:"debug"`
 	EnableProfiling          bool   `yaml:"enable_profiling"`
 	ForwardAddress           string `yaml:"forward_address"`

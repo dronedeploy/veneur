@@ -37,6 +37,8 @@ type Proxy struct {
 	ConsulForwardService   string
 	ConsulTraceService     string
 	ConsulInterval         time.Duration
+	SrvForwardService      string
+	SrvInterval            time.Duration
 	ForwardDestinationsMtx sync.Mutex
 	TraceDestinationsMtx   sync.Mutex
 	HTTPAddr               string
@@ -46,6 +48,7 @@ type Proxy struct {
 	AcceptingTraces        bool
 
 	usingConsul     bool
+	usingSrv        bool
 	enableProfiling bool
 }
 
@@ -84,7 +87,9 @@ func NewProxyFromConfig(conf ProxyConfig) (p Proxy, err error) {
 	p.ConsulForwardService = conf.ConsulForwardServiceName
 	p.ConsulTraceService = conf.ConsulTraceServiceName
 
-	if p.ConsulForwardService != "" || conf.ForwardAddress != "" {
+	p.SrvForwardService = conf.SrvForwardServiceName
+
+	if p.ConsulForwardService != "" || conf.ForwardAddress != "" || p.SrvForwardService != "" {
 		p.AcceptingForwards = true
 	}
 	if p.ConsulTraceService != "" || conf.TraceAddress != "" {
@@ -96,11 +101,16 @@ func NewProxyFromConfig(conf ProxyConfig) (p Proxy, err error) {
 		p.usingConsul = true
 	}
 
+	// We need a convenient way to know if we're using SRV records later
+	if p.SrvForwardService != "" {
+		p.usingSrv = true
+	}
+
 	p.ForwardDestinations = consistent.New()
 	p.TraceDestinations = consistent.New()
 
 	// We got a static forward address, stick it in the destination!
-	if p.ConsulForwardService == "" && conf.ForwardAddress != "" {
+	if p.ConsulForwardService == "" && conf.ForwardAddress != "" && p.SrvForwardService == "" {
 		p.ForwardDestinations.Add(conf.ForwardAddress)
 	}
 	if p.ConsulTraceService == "" && conf.TraceAddress != "" {
@@ -127,6 +137,15 @@ func NewProxyFromConfig(conf ProxyConfig) (p Proxy, err error) {
 		log.WithField("interval", conf.ConsulRefreshInterval).Info("Will use Consul for service discovery")
 	}
 
+	if p.usingSrv {
+		p.SrvInterval, err = time.ParseDuration(conf.SrvRefreshInterval)
+		if err != nil {
+			log.WithError(err).Error("Error parsing Srv refresh interval")
+			return
+		}
+		log.WithField("interval", conf.SrvRefreshInterval).Info("Will use SRV records for service discovery")
+	}
+
 	// TODO Size of replicas in config?
 	//ret.ForwardDestinations.NumberOfReplicas = ???
 
@@ -148,17 +167,37 @@ func (p *Proxy) Start() {
 	// Use the same HTTP Client we're using for other things, so we can leverage
 	// it for testing.
 	config.HttpClient = p.HTTPClient
-	disc, consulErr := NewConsul(config)
-	if consulErr != nil {
-		log.WithError(consulErr).Error("Error creating Consul discoverer")
-		return
+
+	var disc Discoverer
+	if p.usingConsul {
+		disc, discErr := NewConsul(config)
+		if consulErr != nil {
+			log.WithError(discErr).Error("Error creating Consul discoverer")
+			return
+		}
+		p.Discoverer = disc
 	}
-	p.Discoverer = disc
+
+	if p.usingSrv {
+		disc, discErr := NewSrv(config)
+		if SrvErr != nil {
+			log.WithError(discErr).Error("Error creating SRV discoverer")
+			return
+		}
+		p.Discoverer = disc
+	}
 
 	if p.AcceptingForwards && p.ConsulForwardService != "" {
 		p.RefreshDestinations(p.ConsulForwardService, p.ForwardDestinations, &p.ForwardDestinationsMtx)
 		if len(p.ForwardDestinations.Members()) == 0 {
 			log.WithField("serviceName", p.ConsulForwardService).Fatal("Refusing to start with zero destinations for forwarding.")
+		}
+	}
+
+	if p.AcceptingForwards && p.SrvForwardService != "" {
+		p.RefreshDestinations(p.SrvForwardService, p.ForwardDestinations, &p.ForwardDestinationsMtx)
+		if len(p.ForwardDestinations.Members()) == 0 {
+			log.WithField("serviceName", p.SrvForwardService).Fatal("Refusing to start with zero destinations for forwarding.")
 		}
 	}
 
@@ -181,6 +220,20 @@ func (p *Proxy) Start() {
 				}
 				if p.AcceptingTraces && p.ConsulTraceService != "" {
 					p.RefreshDestinations(p.ConsulTraceService, p.TraceDestinations, &p.TraceDestinationsMtx)
+				}
+			}
+		}()
+	}
+
+	if p.usingSrv {
+		go func() {
+			defer func() {
+				ConsumePanic(p.Sentry, p.Statsd, p.Hostname, recover())
+			}()
+			ticker := time.NewTicker(p.SrvInterval)
+			for range ticker.C {
+				if p.AcceptingForwards && p.SrvForwardService != "" {
+					p.RefreshDestinations(p.SrvForwardService, p.ForwardDestinations, &p.ForwardDestinationsMtx)
 				}
 			}
 		}()
