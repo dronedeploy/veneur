@@ -26,7 +26,7 @@ ADD . /go/src/github.com/stripe/veneur
 # because we are guaranteed only one version of Go
 # used to build protoc-gen-go
 RUN go generate
-RUN gofmt -w .
+#RUN gofmt -w .
 
 # Stage any changes caused by go generate and gofmt,
 # then confirm that there are no staged changes.

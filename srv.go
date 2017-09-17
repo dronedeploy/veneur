@@ -20,7 +20,7 @@ type SrvDiscoverer struct {
 // note, it should load in an optional nameserver
 func NewSrv() (*SrvDiscoverer, error) {
 	return &SrvDiscoverer {
-		Nameserver: nil,
+		Nameserver: "",
 		Port: "8126", //TODO: make this configurable
 		Protocol: "tcp", //TODO: make this configurable
 	}, nil
@@ -28,11 +28,11 @@ func NewSrv() (*SrvDiscoverer, error) {
 
 // GetDestinationsForService updates the list of destinations based on healthy nodes
 // found via SRV.
-func (c *SrvDiscoverer) GetDestinationsForService(serviceName string) ([]string, error) {
+func (s *SrvDiscoverer) GetDestinationsForService(serviceName string) ([]string, error) {
 	// I'm not implementing the full SRV spec because kubernetes does not support it:
 	// https://github.com/kubernetes/kubernetes/issues/29420
 	// still works pretty well without it
-	cname, addr, err := net.LookupSRV("", "", serviceName)
+	_, addr, err := net.LookupSRV("", "", serviceName)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (c *SrvDiscoverer) GetDestinationsForService(serviceName string) ([]string,
 
 		dest := url.URL{
 			Scheme: "http",
-			Host:   fmt.Sprintf("%s:%d", a.Target, Port),
+			Host:   fmt.Sprintf("%s:%d", a.Target, s.Port),
 		}
 
 		hosts[index] = dest.String()

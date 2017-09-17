@@ -163,15 +163,14 @@ func NewProxyFromConfig(conf ProxyConfig) (p Proxy, err error) {
 func (p *Proxy) Start() {
 	log.WithField("version", VERSION).Info("Starting server")
 
-	config := api.DefaultConfig()
-	// Use the same HTTP Client we're using for other things, so we can leverage
-	// it for testing.
-	config.HttpClient = p.HTTPClient
-
-	var disc Discoverer
 	if p.usingConsul {
+		config := api.DefaultConfig()
+		// Use the same HTTP Client we're using for other things, so we can leverage
+		// it for testing.
+		config.HttpClient = p.HTTPClient
+
 		disc, discErr := NewConsul(config)
-		if consulErr != nil {
+		if discErr != nil {
 			log.WithError(discErr).Error("Error creating Consul discoverer")
 			return
 		}
@@ -179,8 +178,8 @@ func (p *Proxy) Start() {
 	}
 
 	if p.usingSrv {
-		disc, discErr := NewSrv(config)
-		if SrvErr != nil {
+		disc, discErr := NewSrv()
+		if discErr != nil {
 			log.WithError(discErr).Error("Error creating SRV discoverer")
 			return
 		}

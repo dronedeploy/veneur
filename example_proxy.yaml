@@ -5,6 +5,7 @@ http_address: "localhost:8127"
 
 # How often to refresh from Consul's healthy nodes
 consul_refresh_interval: "30s"
+srv_refresh_interval: "30s"
 
 stats_address: "localhost:8125"
 
@@ -13,6 +14,7 @@ stats_address: "localhost:8125"
 forward_address: "http://veneur.example.com"
 # Or use a consul service for consistent forwarding.
 consul_forward_service_name: "forwardServiceName"
+srv_forward_service_name: ""
 
 ### TRACING
 # The address on which we will listen for trace data

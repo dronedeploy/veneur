@@ -30,6 +30,8 @@ func generateProxyConfig() ProxyConfig {
 		ConsulRefreshInterval:    "86400s",
 		ConsulForwardServiceName: "forwardServiceName",
 		ConsulTraceServiceName:   "traceServiceName",
+		SrvForwardServiceName:    "", //TODO: add tests
+		SrvRefreshInterval:       "86400s",
 		TraceAddress:             "127.0.0.1:8128",
 		TraceAPIAddress:          "127.0.0.1:8135",
 		HTTPAddress:              fmt.Sprintf("127.0.0.1:%d", port),
