@@ -19,7 +19,7 @@ ADD . /go/src/github.com/stripe/veneur
 
 # If running locally, ignore any changes since
 # the last commit
-RUN git reset --hard HEAD && git status
+#RUN git reset --hard HEAD && git status
 
 # Unlike the travis build file, we do NOT need to
 # ignore changes to protobuf-generated output
@@ -38,8 +38,8 @@ RUN gofmt -w .
 # won't work, because it'll compare the mtimes (which have changed), and
 # therefore reports that the file may have changed (ie, a series of 0s)
 # See https://github.com/stripe/veneur/pull/110#discussion_r92843581
-RUN git add .
-RUN git diff-index --cached --exit-code HEAD
+#RUN git add .
+#RUN git diff-index --cached --exit-code HEAD
 
 
 RUN go test -race -v -timeout 60s ./...
