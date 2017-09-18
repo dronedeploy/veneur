@@ -532,6 +532,7 @@ func (s *Server) HandleMetricPacket(packet []byte) error {
 		}
 		s.EventWorker.ServiceCheckChan <- *svcheck
 	} else {
+	    log.WithField("packet", string(packet[:len(packet)])).Debug("Raw metric")
 		metric, err := samplers.ParseMetric(packet)
 		if err != nil {
 			log.WithFields(logrus.Fields{

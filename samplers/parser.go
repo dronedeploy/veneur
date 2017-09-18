@@ -178,8 +178,6 @@ func ParseMetricSSF(metric *ssf.SSFSample) (*UDPMetric, error) {
 // ParseMetric converts the incoming packet from Datadog DogStatsD
 // Datagram format in to a Metric. http://docs.datadoghq.com/guides/dogstatsd/#datagram-format
 func ParseMetric(packet []byte) (*UDPMetric, error) {
-	n := bytes.IndexByte(packet, 0)
-	log.WithField("packet", string(packet[:n])).Debug("Raw metric")
 	ret := &UDPMetric{
 		SampleRate: 1.0,
 	}
